@@ -1,0 +1,1826 @@
+<!doctype html> 
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expresso Rápido - Corrigido</title>
+  <style>
+     #app {
+  display: none;
+}
+    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+    header { background: #007BFF; padding: 10px; text-align: center; color: white; }
+    nav { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
+    nav button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+    nav button.active { background: #0056b3; color: white; }
+    section { display: none; padding: 20px; max-width: 1000px; margin: auto; background: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    section.active { display: block; }
+    input, textarea, button, select { width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+    button { background: #007BFF; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f2f2f2; }
+    img.thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; margin-right: 6px; border:1px solid #ddd; }
+    .pontos-row { display:flex; gap:8px; align-items:center; }
+    .ponto-input { flex:1; }
+    .btn-small { padding:6px 8px; width:auto; display:inline-block; margin-top:0; }
+    #searchCentral { margin-bottom: 10px; }
+    .nav-btn { padding:6px 8px; margin:4px 4px 0 0; display:inline-block; }
+    .endereco-block { margin:6px 0; }
+    .foto-input { display:block; margin-top:6px; }
+    .photo-controls { display:flex; gap:8px; align-items:center; margin-top:6px; }
+    .photo-controls button { width:auto; }
+
+    /* Modal foto */
+    .modal { display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; overflow:auto; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; }
+    .modal-content { background:#fff; padding:12px; border-radius:8px; max-width:95%; max-height:95%; box-sizing:border-box; }
+    .modal-content img { max-width:100%; max-height:80vh; display:block; margin:auto; }
+    .modal-close { margin-top:8px; display:block; text-align:center; }
+
+    /* Central: vertical "planilha" (cada pedido em linha expansível/vertical) */
+    .central-card { border:1px solid #ddd; padding:10px; border-radius:6px; margin-bottom:10px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.02); }
+    .central-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .central-cell { flex:1 1 200px; min-width:160px; }
+    .central-label { font-weight:700; display:block; margin-bottom:4px; color:#333; }
+    .ver-foto-btn { padding:6px 8px; margin-top:6px; display:inline-block; }
+
+    /* Motoboy - abas */
+    .motoboy-tabs { display:flex; gap:8px; margin-bottom:10px; }
+    .motoboy-tabs button { padding:8px 12px; }
+
+    /* header small menu right */
+    .top-menu { display:flex; gap:8px; justify-content:flex-end; margin-bottom:10px; flex-wrap:wrap; }
+    .top-menu button { width:auto; padding:6px 10px; background:#28a745; color:#fff; border-radius:6px; border:none; cursor:pointer; }
+    .top-menu button.secondary{ background:#17a2b8; }
+
+    /* Forçar vertical in all sizes (cards) */
+    @media(min-width:900px){ table { display:none; } }
+    @media(max-width:899px){ table { display:none; } }
+
+    /* chat visuals */
+    .chat-panel { border:1px solid #ddd; padding:10px; border-radius:6px; background:#fff; margin-top:12px; }
+    .chat-messages { background:#f9f9f9; height:200px; overflow-y:auto; padding:8px; border:1px solid #eee; border-radius:6px; }
+    .chat-input { display:flex; gap:8px; margin-top:8px; }
+    .chat-input textarea { flex:1; min-height:48px; resize:vertical; }
+    .acesso-restrito-box{
+  background:#fff8c4;
+  border:2px solid #f1c40f;
+  padding:18px;
+  border-radius:14px;
+  margin:15px;
+  text-align:center;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+.acesso-restrito-box h2{
+  margin-top:0;
+  color:#8a6d00;
+  font-size:22px;
+}
+
+.acesso-restrito-box p{
+  color:#444;
+  line-height:1.5;
+  margin:10px 0;
+}
+
+.btn-cadastro{
+  display:inline-block;
+  margin-top:12px;
+  background:#f1c40f;
+  color:#000;
+  padding:12px 20px;
+  border-radius:10px;
+  text-decoration:none;
+  font-weight:bold;
+  transition:0.2s;
+}
+
+.btn-cadastro:hover{
+  transform:scale(1.03);
+}
+ </style>
+</head>
+<body>
+  <div id="app" style="display:none;">
+  <header><h1>Expresso Rápido</h1></header>
+
+<nav>
+  <button class="active" data-target="cliente">Cliente</button>
+  <button data-target="motoboy">Motoboy</button>
+  <button data-target="central">Central</button>
+</nav>
+
+<!-- CLIENTE -->
+<section class="active" id="cliente">
+  <div class="top-menu">
+    <button onclick="abrirLinkSuporte()">Suporte</button>
+    <button class="secondary" onclick="abrirLinkSugestao()">Sugestão</button>
+  </div>
+
+  <h2>Solicitar Entrega</h2>
+  <input id="clienteNomeInput" placeholder="Seu nome (para confirmação)" type="text" />
+  <input id="motoboySelecionado" placeholder="Motoboy específico (opcional)" type="text" />
+  
+  <input id="pontoA" placeholder="Endereço de retirada (Ponto A)" type="text" />
+  <input id="pontoB" placeholder="Endereço de entrega (Ponto B)" type="text" />
+
+  <div id="pontosExtrasContainer"></div>
+  <button class="btn-small" onclick="adicionarPontoOpcional()" type="button">Adicionar ponto opcional</button>
+
+  <textarea id="observacao" placeholder="Observações"></textarea>
+  <button onclick="enviarPedido()">Enviar Pedido</button>
+
+  <h3>📦 Meus Pedidos / Histórico</h3>
+  <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+    <input id="searchClienteHistorico" oninput="carregarPedidosCliente()" placeholder="Pesquisar (endereço, id, status)" type="text" />
+  </div>
+  <div style="display:flex; gap:8px; margin-bottom:10px;">
+    <button id="btnAtivos" onclick="trocarAbaCliente('ativos')">📦 Ativos</button>
+    <button id="btnHistorico" onclick="trocarAbaCliente('historico')">📜 Histórico</button>
+  </div>
+  <div id="listaClientePedidos"></div>
+
+  <!-- CHAT CLIENTE (adicionado para garantir que o chat não suma) -->
+  <div id="chatCliente" class="chat-panel" style="display:none;">
+    <h3>💬 Chat com Motoboy / Central</h3>
+    <div id="chatMensagensCliente" class="chat-messages"></div>
+    <div class="chat-input">
+      <textarea id="chatTextoCliente" placeholder="Digite sua mensagem"></textarea>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <button onclick="enviarMensagemCliente()">Enviar</button>
+        <button onclick="fecharChatCliente()" style="background:#888;">Fechar</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MOTOBOY -->
+<section id="motoboy">
+  <div class="top-menu">
+    <button onclick="abrirLinkSuporte()">Suporte</button>
+    <button class="secondary" onclick="abrirLinkSugestao()">Sugestão</button>
+  </div>
+
+  <h2>Área do Motoboy</h2>
+  <button id="toggleOnline" type="button">Ficar Online</button>
+  <p id="statusMotoboy">Status: Offline</p>
+
+  <div style="display: flex; gap: 8px; margin: 10px 0;">
+    <button class="btn-small" id="tabPedidos">Pedidos</button>
+    <button class="btn-small" id="tabHistorico">Histórico</button>
+  </div>
+
+  <button onclick="atualizarPedidosMotoboy()" style="background:#28a745;">
+    🔄 Atualizar pedidos
+  </button>
+
+  <div id="motoboyPedidosTab">
+    <h3>Pedidos Disponíveis</h3>
+    <div id="listaPending"></div>
+  </div>
+
+  <div id="motoboyHistoricoTab" style="display: none;">
+    <h3>Histórico de Entregas (Motoboy)</h3>
+    <div id="listaHistoricoMotoboy"></div>
+  </div>
+
+  <div id="chatBox" class="chat-panel" style="display: none;">
+    <h3>💬 Chat com Cliente</h3>
+    <div id="chatMensagens" class="chat-messages"></div>
+    <div class="chat-input">
+      <input id="chatTexto" placeholder="Digite sua mensagem" />
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <button onclick="enviarMensagemChat()">Enviar</button>
+        <button onclick="fecharChatMotoboy()" style="background:#888;">Fechar</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CENTRAL -->
+<section id="central">
+  <div class="top-menu">
+    <button onclick="abrirLinkSuporte()">Suporte</button>
+    <button class="secondary" onclick="abrirLinkSugestao()">Sugestão</button>
+  </div>
+
+  <h3>👥 Usuários</h3>
+
+  <input id="searchUsuarios" placeholder="Buscar usuário..." oninput="carregarUsuarios()">
+  
+  <div style="display:flex; gap:10px; margin:10px 0;">
+    <button onclick="carregarUsuarios('cliente')">Clientes</button>
+    <button onclick="carregarUsuarios('motoboy')">Motoboys</button>
+  </div>
+  
+  <div id="listaUsuarios"></div>
+
+  <h2>Central de Controle</h2>
+
+  <!-- Chat moved to top as requested -->
+  <div id="chatCentralContainer" style="background: #f9f9f9; border-radius: 8px; border: 1px solid #ccc; display: none; margin-bottom: 12px; padding: 10px;">
+    <h3>💬 Chat da Central</h3>
+    <div id="chatMensagensCentral" style="background: #fff; border: 1px solid #ddd; height: 200px; overflow-y: auto; padding: 5px;"></div>
+    <textarea id="chatTextoCentral" placeholder="Digite uma mensagem" rows="3"></textarea>
+    <div style="display: flex; gap: 8px; margin-top: 6px;">
+      <button id="btnEnviarCentral">Enviar</button>
+      <button id="btnFecharChatCentral" style="background: #888; color: white;">Fechar Chat</button>
+    </div>
+  </div>
+
+  <div style="align-items: center; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+    <input id="searchCentral" placeholder="Nome / ID / Retirada / Entrega / Motoboy" style="width: 320px;" />
+    <div style="align-items: center; display: flex; gap: 8px;">
+      <label><input id="selectAllCentral" onchange="toggleSelectAll(this)" type="checkbox" /> Selecionar todos</label>
+      <button class="btn-small btn-danger" onclick="excluirSelecionados()" style="background: #e74c3c;">Excluir selecionados</button>
+    </div>
+    <div id="centralTotal" style="font-weight: 700; margin-left: auto;"></div>
+  </div>
+
+  <div id="centralCardsContainer"></div>
+</section>
+
+<!-- Modal for image view -->
+<div class="modal" id="modalFoto">
+  <div class="modal-content">
+    <div style="align-items: center; display: flex; justify-content: space-between; margin-bottom: 8px;">
+      <div id="modalTitle" style="font-weight: 700;"></div>
+      <div>
+        <button class="btn-small" onclick="fecharModal()" style="background: #e74c3c;">Fechar</button>
+      </div>
+    </div>
+    <div id="modalContent" style="text-align: center;"></div>
+  </div>
+</div>
+<header>...</header>
+<nav>...</nav>
+<section id="cliente">...</section>
+<section id="motoboy">...</section>
+<section id="central">...</section>
+</div>
+
+<div id="telaLogin">
+  
+  <div class="acesso-restrito-box">
+
+    <h2>🔒 Acesso Restrito</h2>
+  
+    <p>
+      Este aplicativo é exclusivo para clientes e colaboradores cadastrados na Expresso Lab Pet.
+    </p>
+  
+    <p>
+      Para utilizar o sistema, é necessário realizar cadastro e aguardar a liberação da central.
+    </p>
+  
+    <p>
+      Caso ainda não tenha acesso, realize seu cadastro abaixo:
+    </p>
+  
+    <a 
+      href=https://siteexpressopet.blogspot.com/2026/03/expresso-lab-pet-body-margin0-font.html 
+      target="_blank" 
+      class="btn-cadastro"
+    >
+      Fazer Cadastro
+    </a>
+  
+  </div>
+
+  
+  <h2>Login</h2>
+
+
+  <select id="tipoLogin">
+    <option value="">Tipo de usuário</option>
+    <option value="cliente">Cliente</option>
+    <option value="motoboy">Motoboy</option>
+    <option value="central">Central</option>
+  </select>
+
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="senha" placeholder="Senha">
+
+  <button onclick="login()">Entrar</button>
+  <button onclick="cadastrar()">Cadastrar</button>
+</div>
+
+<div style="
+  background:#fff3cd;
+  border:1px solid #ffeeba;
+  color:#856404;
+  padding:12px;
+  border-radius:8px;
+  margin-bottom:12px;
+  font-size:14px;
+  "></div>"
+</div>
+
+</body>
+
+<audio id="notificacaoAudio" preload="auto" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script>
+  // ========== CONFIGURAÇÕES ==========
+  const firebaseConfig = {
+    apiKey: "AIzaSyBflBSrH7NwviB7MTPOJErdCasKfuSVGxQ",
+    authDomain: "expresso-rapido-lab-pet.firebaseapp.com",
+    databaseURL: "https://expresso-rapido-lab-pet-default-rtdb.firebaseio.com",
+    projectId: "expresso-rapido-lab-pet",
+    storageBucket: "expresso-rapido-lab-pet.appspot.com",
+    messagingSenderId: "493962981179",
+    appId: "1:493962981179:web:11bb878473f472ca14111e"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  let pedidosNotificados = {};
+
+  window.CONFIG_CENTRAL = {
+  email: "admin@expresso.com",
+  senha: "adm5825expresso",
+  chave: "centralforte2026"
+};
+  // Cloudinary (use seus valores)
+  const CLOUDINARY_CLOUD_NAME = 'dnbtohdzn';
+  const CLOUDINARY_UPLOAD_PRESET = 'expresso_upload';
+
+  // WhatsApp group (seu link)
+  const whatsappLink = "https://chat.whatsapp.com/DvETd4RQm9p7QL4wZ72cQM";
+
+  // variáveis de controle para chats
+  let abaCliente = 'ativos';
+  let chatClientePedidoID = null;
+  let abrirChatCliente_listener = null;
+  let chatMotoboyPedidoID = null;
+  let abrirChatMotoboy_listener = null;
+  let chatCentralPedidoID = null;
+  let abrirChatCentral_listener = null;
+  
+  let tipoUsuario = null;
+  let nomeUsuario = null;
+  let usuarioLogado = null;
+
+  // NAV protection for central
+  document.querySelectorAll('nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.target;
+      if (target === 'central') {
+        const ok = sessionStorage.getItem('central_key_ok') === 'true';
+        if (!ok) {
+          const chave = prompt('Digite a chave de acesso para a Central:');
+          if (chave !== CONFIG_CENTRAL.chave) {
+            alert('Chave inválida. Acesso negado.');
+            document.querySelector('button[data-target="cliente"]').click();
+            return;
+          }
+          sessionStorage.setItem('central_key_ok', 'true');
+        }
+      }
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(target).classList.add('active');
+    });
+  });
+
+  // Top menu links
+  function abrirLinkSuporte(){ window.open(whatsappLink, '_blank'); }
+  function abrirLinkSugestao(){ window.open(whatsappLink, '_blank'); }
+
+  // ----- PONTOS OPCIONAIS (dinâmico) -----
+  function adicionarPontoOpcional(value='') {
+    const container = document.getElementById('pontosExtrasContainer');
+    const index = container.children.length;
+    const row = document.createElement('div');
+    row.className = 'pontos-row';
+    row.innerHTML = `
+      <input class="ponto-input" type="text" id="pontoExtra_${index}" placeholder="Endereço adicional (opcional)" value="${value}">
+      <button class="btn-small" type="button" onclick="removerPonto(this)" style="background:#e74c3c;">Remover</button>
+    `;
+    container.appendChild(row);
+  }
+  function removerPonto(btn) { const row = btn.parentElement; row.remove(); }
+
+  // inicial
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!document.querySelector('#pontosExtrasContainer .ponto-input')) adicionarPontoOpcional();
+    carregarCentral();
+    carregarPedidosCliente();
+
+    const storedOnline = localStorage.getItem('motoboyOnline') === 'true';
+    const storedNome = localStorage.getItem('motoboyNome') || '';
+    setMotoboyOnlineState(storedOnline);
+    if (storedOnline && storedNome) carregarPending();
+
+    const btnToggle = document.getElementById('toggleOnline');
+    if (btnToggle) {
+      btnToggle.addEventListener('click', () => {
+        const currently = localStorage.getItem('motoboyOnline') === 'true';
+        if (!currently) {
+          let nomeMot = localStorage.getItem('motoboyNome');
+          if (!nomeMot) {
+            nomeMot = prompt('Seu nome (motoboy):');
+            if (!nomeMot) return alert('Nome é obrigatório para ficar online.');
+            localStorage.setItem('motoboyNome', nomeMot);
+          }
+          setMotoboyOnlineState(true);
+          
+        } else {
+          setMotoboyOnlineState(false);
+          if (carregarPending.listener) { db.ref('pedidos').off('value', carregarPending.listener); carregarPending.listener = null; }
+          document.getElementById('listaPending').innerHTML = '';
+        }
+      });
+    }
+
+    // motoboy tabs
+    document.getElementById('tabPedidos').addEventListener('click', () => {
+      document.getElementById('motoboyPedidosTab').style.display = '';
+      document.getElementById('motoboyHistoricoTab').style.display = 'none';
+    });
+    document.getElementById('tabHistorico').addEventListener('click', () => {
+      document.getElementById('motoboyPedidosTab').style.display = 'none';
+      document.getElementById('motoboyHistoricoTab').style.display = '';
+      carregarHistoricoMotoboy();
+    });
+
+    // central controls
+    document.getElementById('searchCentral').addEventListener('input', (e) => { renderCentralCards(e.target.value); });
+    document.getElementById('selectAllCentral').addEventListener('change', (e) => toggleSelectAll(e.target));
+
+    // central chat buttons
+    document.getElementById('btnEnviarCentral').addEventListener('click', () => {
+      const texto = document.getElementById('chatTextoCentral').value.trim();
+      if (!texto) return alert('Digite uma mensagem');
+      if (!chatCentralPedidoID) return alert('Abra um chat primeiro');
+      db.ref(`chats/${chatCentralPedidoID}`).push({ nome: 'Central', texto, hora: Date.now(), from: 'central' });
+      document.getElementById('chatTextoCentral').value = '';
+    });
+    document.getElementById('btnFecharChatCentral').addEventListener('click', () => {
+      document.getElementById('chatCentralContainer').style.display = 'none';
+      if (abrirChatCentral_listener && chatCentralPedidoID) { db.ref(`chats/${chatCentralPedidoID}`).off('value', abrirChatCentral_listener); abrirChatCentral_listener = null; }
+      chatCentralPedidoID = null;
+    });
+  });
+
+  // ========== Enviar Pedido (CLIENTE) ==========
+  function enviarPedido() {
+  const pontoA = document.getElementById('pontoA').value.trim();
+  const pontoB = document.getElementById('pontoB').value.trim();
+  const observacao = document.getElementById('observacao').value.trim();
+
+  // 🔥 NOVO CAMPO (se não existir não quebra)
+  const campoMotoboy = document.getElementById('motoboySelecionado');
+  const motoboySelecionado = campoMotoboy ? campoMotoboy.value.trim().toLowerCase() : '';
+
+  if (!pontoA && !pontoB) return alert('Preencha pelo menos um endereço.');
+
+  const pontos = [];
+  document.querySelectorAll('#pontosExtrasContainer .ponto-input').forEach(inp => {
+    const v = inp.value.trim();
+    if (v) pontos.push(v);
+  });
+
+  let nomeCliente = document.getElementById('clienteNomeInput').value.trim();
+  if (!nomeCliente) nomeCliente = localStorage.getItem('clienteNome') || prompt("Digite seu nome:");
+  if (!nomeCliente) return alert('Nome obrigatório.');
+
+  localStorage.setItem('clienteNome', nomeCliente);
+  document.getElementById('clienteNomeInput').value = nomeCliente;
+
+  const novoRef = db.ref('pedidos').push();
+  const pedidoID = novoRef.key;
+
+  novoRef.set({
+    retirada: pontoA || '',
+    entrega: pontoB || '',
+    observacao,
+    pontoExtra: pontos,
+    status: 'pendente',
+    motoboy: '',
+    cliente: nomeCliente,
+    motoboySelecionado: motoboySelecionado, // 🔥 ESSENCIAL
+    fotoPontoAURL: '',
+    fotoPontoBURL: '',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    valorEntrega: ''
+  });
+
+  alert('Pedido enviado!');
+
+  document.getElementById('pontoA').value = '';
+  document.getElementById('pontoB').value = '';
+  document.getElementById('observacao').value = '';
+
+  if (campoMotoboy) campoMotoboy.value = '';
+
+  document.getElementById('pontosExtrasContainer').innerHTML = '';
+  adicionarPontoOpcional();
+
+  abrirChatCliente(pedidoID);
+  carregarPedidosCliente();
+}
+
+  // ========== Estado online motoboy ==========
+  function setMotoboyOnlineState(isOnline) {
+    localStorage.setItem('motoboyOnline', isOnline ? 'true' : 'false');
+    document.getElementById('statusMotoboy').innerText = 'Status: ' + (isOnline ? 'Online' : 'Offline');
+    document.getElementById('toggleOnline').innerText = isOnline ? 'Ficar Offline' : 'Ficar Online';
+  }
+
+  // ========== CAMERA helper ==========
+  function abrirCamera(inputId) {
+    const inp = document.getElementById(inputId);
+    if (!inp) return alert('Campo de foto não encontrado.');
+    inp.click();
+  }
+
+  // ========== Listar Pedidos para Motoboy ==========
+  function carregarPending() {
+    const div = document.getElementById('listaPending');
+    const motoboyAtual = localStorage.getItem('motoboyNome');
+    if (carregarPending.listener) db.ref('pedidos').off('value', carregarPending.listener);
+    carregarPending.listener = db.ref('pedidos').on('value', snap => {
+      if (localStorage.getItem('motoboyOnline') !== 'true') return;
+      div.innerHTML = '';
+      const historicoContainer = document.getElementById('listaHistoricoMotoboy');
+      if (historicoContainer) historicoContainer.innerHTML = '';
+
+      snap.forEach(ch => {
+        const p = ch.val();
+        const id = ch.key;
+
+        // build addresses array (same logic as uploader)
+        const enderecos = [];
+        if (p.retirada) enderecos.push(p.retirada);
+        if (Array.isArray(p.pontoExtra)) p.pontoExtra.forEach(x => { if (x) enderecos.push(x); });
+        else if (p.pontoExtra && typeof p.pontoExtra === 'string') enderecos.push(p.pontoExtra);
+        if (p.entrega) enderecos.push(p.entrega);
+        const lastIndex = enderecos.length - 1;
+
+        const botoesHtml = enderecos.map((e,i) => {
+          const esc = e.replace(/'/g, "\\'");
+          const fotoId = `foto_${id}_${i}`;
+          // navigation opens in new tab (keeps app open)
+          return `<div class="endereco-block"><button class='nav-btn' type='button' onclick="solicitarPermissaoLocalizacao(() => iniciarNavegacao('${esc}'))">${e}</button><div class='photo-controls'><button type='button' class='btn-small' onclick="solicitarPermissaoCamera(() => abrirCamera('${fotoId}'))">Abrir Câmera</button><input class='foto-input' style='display:none' type='file' accept='image/*' capture='environment' id='${fotoId}'></input><button type='button' class='btn-small' id='btn_upload_${fotoId}' onclick="triggerUpload('${id}','${i}','${fotoId}')">Enviar Foto</button></div></div>`;
+        }).join('');
+
+        // PENDENTES
+        if (p.status === 'pendente') {
+          const card = document.createElement('div');
+          card.innerHTML = `
+            <p>🛵 <b>${p.cliente || 'Cliente'}</b></p>
+            <div>${botoesHtml}</div>
+            <p><small>Obs: ${p.observacao || '—'}</small></p>
+            <button onclick="aceitarPedido('${id}')">Aceitar Pedido</button>
+          `;
+          div.appendChild(card);
+          
+        }
+
+    
+      
+
+        // 🔥 SOM CORRETO
+        const motoboyAtual = (nomeUsuario || localStorage.getItem('motoboyNome') || '').toLowerCase();
+const direcionado = (p.motoboySelecionado || '').toLowerCase();
+const agora = Date.now();
+
+// pedido novo = até 5 segundos
+const baseTempo = p.updatedAt || p.createdAt || 0;
+const pedidoNovo = (agora - baseTempo) < 5000;
+
+if (
+  tipoUsuario === "motoboy" &&
+  localStorage.getItem('motoboyOnline') === 'true' &&
+  p.status === 'pendente' &&
+  (!direcionado || direcionado === motoboyAtual) &&
+  pedidoNovo &&
+  !pedidosNotificados[id]
+) {
+  document.getElementById("notificacaoAudio").play().catch(()=>{});
+  pedidosNotificados[id] = true;
+}
+        // EM ANDAMENTO (para motoboy logado)
+        if ((p.status === 'em andamento' || p.status === 'em_andamento') && p.motoboy === motoboyAtual) {
+
+          // collect fotos from /fotos node if any
+          let fotosHtml = '';
+
+          if (p.fotos) {
+            // build addresses array again and map indexes -> labels A / Extra n / B
+            const endArr = [];
+            if (p.retirada) endArr.push(p.retirada);
+            if (Array.isArray(p.pontoExtra)) p.pontoExtra.forEach(x => { if (x) endArr.push(x); });
+            else if (p.pontoExtra && typeof p.pontoExtra === 'string') endArr.push(p.pontoExtra);
+            if (p.entrega) endArr.push(p.entrega);
+            const lastIdx = endArr.length - 1;
+
+            const keys = Object.keys(p.fotos).sort((a,b)=> Number(a)-Number(b));
+            keys.forEach(k => {
+              const fi = p.fotos[k];
+              const idx = Number(k);
+              let labelName = (idx === 0) ? 'Ponto A' : (idx === lastIdx) ? 'Ponto B' : `Extra ${idx}`;
+              const address = fi.address || endArr[idx] || '';
+              fotosHtml += `
+                <div style="margin-right:8px;">
+                  <small>${labelName}${address ? ' — ' + address : ''}</small><br>
+                  <img class="thumb" src="${fi.url}">
+                  <br>
+                  <button class="ver-foto-btn" onclick="abrirModalFoto('${encodeURI(fi.url)}')">Ver Foto</button>
+                </div>`;
+            });
+          } else {
+            if (p.fotoPontoAURL)
+              fotosHtml += `<div style="margin-right:8px;"><small>Ponto A</small><br><img class="thumb" src="${p.fotoPontoAURL}"><br><button class="ver-foto-btn" onclick="abrirModalFoto('${encodeURI(p.fotoPontoAURL)}')">Ver Foto</button></div>`;
+
+            if (p.fotoPontoBURL)
+              fotosHtml += `<div style="margin-right:8px;"><small>Ponto B</small><br><img class="thumb" src="${p.fotoPontoBURL}"><br><button class="ver-foto-btn" onclick="abrirModalFoto('${encodeURI(p.fotoPontoBURL)}')">Ver Foto</button></div>`;
+          }
+
+          const card = document.createElement('div');
+          card.innerHTML = `
+            <hr>
+            <p><b>Pedido em andamento — ${p.cliente || 'Cliente'}</b></p>
+            <div>${botoesHtml}</div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button onclick="abrirChat('${id}')">💬 Chat</button>
+              <button onclick="finalizarEntrega('${id}')">✅ Finalizar</button>
+              <button onclick="largarPedido('${id}')">🔁 Largar</button>
+            </div>
+            <div style="margin-top:12px;">
+              <b>Fotos do Pedido</b>
+              <div style="display:flex; gap:8px; align-items:flex-start; margin-top:6px;">
+                ${fotosHtml || '—'}
+              </div>
+            </div>
+          `;
+          div.appendChild(card);
+        }
+      });
+    });
+  }
+
+
+  // ========== triggerUpload -> envia para Cloudinary e salva no Firebase ==========
+  async function triggerUpload(pedidoID, pontoIndex, inputId) {
+    const input = document.getElementById(inputId);
+    const btn = document.getElementById('btn_upload_' + inputId);
+    if (!input) return alert('Campo de foto não encontrado.');
+    if (!input.files || !input.files[0]) return alert('Nenhuma foto selecionada. Use Abrir Câmera primeiro.');
+    btn.disabled = true; btn.innerText = 'Enviando...';
+
+    try {
+      const url = await uploadFotoCloudinary(pedidoID, String(pontoIndex), inputId);
+      btn.disabled = false; btn.innerText = 'Enviar Foto';
+      try { carregarCentral(); carregarPedidosCliente();  } catch(e){ /* silencioso */ }
+      alert('Foto enviada com sucesso!');
+      return url;
+    } catch (err) {
+      console.error(err);
+      btn.disabled = false; btn.innerText = 'Enviar Foto';
+      alert('Falha ao enviar foto. Tente novamente.');
+      throw err;
+    }
+  }
+
+  // Faz upload para Cloudinary e grava a URL no Firebase
+  async function uploadFotoCloudinary(pedidoID, ponto, inputId) {
+    const inputElement = document.getElementById(inputId);
+    if (!inputElement || !inputElement.files || !inputElement.files[0]) throw new Error('Selecione uma imagem.');
+    const file = inputElement.files[0];
+    if (!file.type.startsWith('image/')) throw new Error('Arquivo deve ser uma imagem.');
+    if (file.size > 8 * 1024 * 1024) throw new Error('Imagem muito grande (máx 8MB).');
+
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`, { method: 'POST', body: fd });
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error('Erro upload Cloudinary: ' + txt);
+    }
+    const json = await resp.json();
+    const secureUrl = json.secure_url || json.url;
+    if (!secureUrl) throw new Error('Cloudinary não retornou URL.');
+
+    // Atualiza Firebase: adiciona url em campos e registra em fotos com address
+    const pedidoSnap = await db.ref('pedidos/' + pedidoID).once('value');
+    const pedido = pedidoSnap.val() || {};
+    const enderecos = [];
+    if (pedido.retirada) enderecos.push(pedido.retirada);
+    if (Array.isArray(pedido.pontoExtra)) pedido.pontoExtra.forEach(x=>{ if (x) enderecos.push(x); });
+    else if (pedido.pontoExtra && typeof pedido.pontoExtra === 'string') enderecos.push(pedido.pontoExtra);
+    if (pedido.entrega) enderecos.push(pedido.entrega);
+    const lastIndex = enderecos.length - 1;
+
+    const updates = {};
+    updates['fotoPonto' + ponto + 'URL'] = secureUrl; // keeps backward compatibility
+    if (String(ponto) === '0') updates['fotoPontoAURL'] = secureUrl;
+    if (String(ponto) === String(lastIndex)) updates['fotoPontoBURL'] = secureUrl;
+    updates['updatedAt'] = Date.now();
+
+    await db.ref('pedidos/' + pedidoID).update(updates);
+
+    const address = (enderecos[Number(ponto)] || '');
+
+    // grava em /pedidos/{id}/fotos/{ponto}
+    await db.ref(`pedidos/${pedidoID}/fotos/${ponto}`).set({ url: secureUrl, uploadedAt: Date.now(), fileName: file.name, cloudinary: true, address });
+
+    // grava em fotosHistorico para facilitar histórico por motoboy (com address)
+    const histRef = db.ref(`fotosHistorico/${pedidoID}`).push();
+    await histRef.set({ url: secureUrl, ponto, address, fileName: file.name, uploadedAt: Date.now(), motoboy: localStorage.getItem('motoboyNome') || '' });
+
+    inputElement.value = '';
+    return secureUrl;
+  }
+
+  // ========== aceitarPedido (transaction) ==========
+  function aceitarPedido(id) {
+
+const nome = (nomeUsuario || '').toLowerCase();
+
+if (!nome) {
+  alert("Erro: nome do motoboy não identificado.");
+  return;
+}
+
+const ref = db.ref('pedidos/' + id);
+
+ref.transaction(curr => {
+  if (!curr) return curr;
+
+  const direcionado = (curr.motoboySelecionado || '').toLowerCase();
+
+  // 🔥 BLOQUEIO REAL (agora correto)
+  if (direcionado && direcionado !== nome) {
+    return; // bloqueia sem erro visual
+  }
+
+  if (curr.status !== 'pendente') return;
+
+  curr.status = 'em andamento';
+  curr.motoboy = nome;
+  curr.updatedAt = Date.now();
+
+  return curr;
+
+}, (err, committed) => {
+
+  if (err) {
+    alert("Erro ao aceitar");
+    return;
+  }
+
+  if (!committed) {
+    alert("Esse pedido é de outro motoboy.");
+    return;
+  }
+
+  alert("Pedido aceito!");
+  abrirChat(id);
+});
+}
+  function iniciarNavegacao(endereco) {
+    const link = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(endereco)}`;
+    window.open(link, '_blank'); // opens in new tab, app remains open
+  }
+
+  function finalizarEntrega(id) { db.ref('pedidos/' + id).update({ status: 'finalizado', updatedAt: Date.now() }); }
+  function largarPedido(id) {
+  db.ref('pedidos/' + id).update({
+    status: 'pendente',
+    motoboy: '',
+    updatedAt: Date.now(),
+    createdAt: Date.now()
+  });
+
+  // 🔥 LIBERA O SOM NOVAMENTE
+  if (typeof pedidosNotificados !== 'undefined') {
+    delete pedidosNotificados[id];
+  }
+}
+  // ===============================================================
+  // ========================= CHAT MOTOBOY =========================
+  // ===============================================================
+  function abrirChat(pedidoID) {
+    // remove listener antigo com segurança
+    if (abrirChatMotoboy_listener && chatMotoboyPedidoID) {
+      try { db.ref(`chats/${chatMotoboyPedidoID}`).off('value', abrirChatMotoboy_listener); } catch(e) {}
+      abrirChatMotoboy_listener = null;
+    }
+
+    chatMotoboyPedidoID = pedidoID;
+
+    const chatBox = document.getElementById("chatBox");
+    const mensagensDiv = document.getElementById("chatMensagens");
+    chatBox.style.display = 'block';
+    mensagensDiv.innerHTML = '';
+
+    abrirChatMotoboy_listener = db.ref(`chats/${pedidoID}`).on('value', snap => {
+      mensagensDiv.innerHTML = '';
+      snap.forEach(m => {
+        const msg = m.val();
+        const p = document.createElement('p');
+        p.textContent = `${msg.nome}: ${msg.text || msg.texto || msg.mensagem || ''}`;
+        mensagensDiv.appendChild(p);
+      });
+      mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
+    });
+  }
+  window.abrirChat = abrirChat;
+
+  function fecharChatMotoboy() {
+    const chatBox = document.getElementById("chatBox");
+    chatBox.style.display = 'none';
+    if (abrirChatMotoboy_listener && chatMotoboyPedidoID) {
+      try { db.ref(`chats/${chatMotoboyPedidoID}`).off('value', abrirChatMotoboy_listener); } catch(e) {}
+      abrirChatMotoboy_listener = null;
+    }
+    chatMotoboyPedidoID = null;
+  }
+
+  function enviarMensagemChat() {
+    const nome = localStorage.getItem('motoboyNome') || "Motoboy";
+    const texto = document.getElementById("chatTexto").value.trim();
+
+    if (!texto) return;
+    if (!chatMotoboyPedidoID) return alert('Abra um chat do pedido primeiro.');
+
+    db.ref(`chats/${chatMotoboyPedidoID}`).push({
+      nome,
+      text: texto,
+      hora: Date.now(),
+      from: 'motoboy'
+    });
+
+    document.getElementById("chatTexto").value = '';
+  }
+
+  // ------- Chat cliente (substitua a versão atual por esta) -------
+  /* Variáveis globais (declare apenas 1 vez no topo do script):
+  let chatClientePedidoID = null;
+  let abrirChatCliente_listener = null;
+  */
+
+  function abrirChatCliente(pedidoID) {
+    // remove listener antigo com segurança
+    if (abrirChatCliente_listener && chatClientePedidoID) {
+      try { db.ref(`chats/${chatClientePedidoID}`).off('value', abrirChatCliente_listener); } catch(e) {}
+      abrirChatCliente_listener = null;
+    }
+
+    chatClientePedidoID = pedidoID;
+    const container = document.getElementById("chatCliente");
+    const mensagensDiv = document.getElementById("chatMensagensCliente");
+    if (!container || !mensagensDiv) {
+      console.warn('Painel de chat do cliente não encontrado no DOM.');
+      return;
+    }
+    container.style.display = 'block';
+    mensagensDiv.innerHTML = '';
+
+    const ref = db.ref(`chats/${pedidoID}`);
+
+    abrirChatCliente_listener = ref.on('value', snap => {
+      mensagensDiv.innerHTML = '';
+      snap.forEach(m => {
+        const msg = m.val() || {};
+        // compatibilidade com diferentes keys
+        const conteudo = msg.text || msg.texto || msg.msg || msg.mensagem || '';
+        const nome = msg.nome || (msg.from === 'motoboy' ? 'Motoboy' : (msg.from === 'central' ? 'Central' : 'Cliente'));
+        const p = document.createElement('p');
+        p.textContent = `${nome}: ${conteudo}`;
+        mensagensDiv.appendChild(p);
+      });
+      mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
+    });
+  }
+  window.abrirChatCliente = abrirChatCliente;
+
+  function fecharChatCliente() {
+    const container = document.getElementById("chatCliente");
+    if (container) container.style.display = 'none';
+    if (abrirChatCliente_listener && chatClientePedidoID) {
+      try { db.ref(`chats/${chatClientePedidoID}`).off('value', abrirChatCliente_listener); } catch(e) {}
+      abrirChatCliente_listener = null;
+    }
+    chatClientePedidoID = null;
+  }
+
+  function enviarMensagemCliente() {
+    const nome = localStorage.getItem('clienteNome') || 'Cliente';
+    const textoEl = document.getElementById("chatTextoCliente");
+    if (!textoEl) return alert('Campo de mensagem não encontrado.');
+    const texto = textoEl.value.trim();
+    if (!texto) return alert('Digite uma mensagem.');
+    if (!chatClientePedidoID) return alert('Abra o chat do pedido para enviar mensagem.');
+
+    // padroniza o formato armazenado (evita incompatibilidade)
+    db.ref(`chats/${chatClientePedidoID}`).push({
+      nome,
+      text: texto,
+      hora: Date.now(),
+      from: 'cliente'
+    }).then(() => {
+      textoEl.value = '';
+    }).catch(err => {
+      console.error('Erro ao enviar mensagem do cliente:', err);
+      alert('Erro ao enviar mensagem. Tente novamente.');
+    });
+  }
+
+  // ===============================================================
+  // =========================== CHAT CENTRAL =======================
+  // ===============================================================
+  function abrirChatCentral(pedidoID) {
+    if (abrirChatCentral_listener && chatCentralPedidoID) {
+      try { db.ref(`chats/${chatCentralPedidoID}`).off('value', abrirChatCentral_listener); } catch(e) {}
+      abrirChatCentral_listener = null;
+    }
+
+    chatCentralPedidoID = pedidoID;
+    document.getElementById('chatCentralContainer').style.display = 'block';
+    document.getElementById('chatMensagensCentral').innerHTML = '';
+
+    abrirChatCentral_listener = db.ref(`chats/${pedidoID}`).on('value', snap => {
+      const div = document.getElementById('chatMensagensCentral');
+      div.innerHTML = '';
+
+      snap.forEach(m => {
+        const msg = m.val();
+        const p = document.createElement('p');
+        p.textContent = `${msg.nome}: ${msg.text || msg.texto || msg.mensagem || ''}`;
+        div.appendChild(p);
+      });
+
+      div.scrollTop = div.scrollHeight;
+    });
+  }
+  window.abrirChatCentral = abrirChatCentral;
+
+  // ===============================================================
+  // =============== CARREGAR CENTRAL (renderizar) =================
+  // ===============================================================
+  var pedidosCache = {};
+
+  function carregarCentral() {
+    if (carregarCentral.listener) {
+      db.ref('pedidos').off('value', carregarCentral.listener);
+    }
+
+    carregarCentral.listener = carregarCentral.listener = db.ref('pedidos').on('value', snap => {
+      pedidosCache = {};
+      snap.forEach(ch => {
+        pedidosCache[ch.key] = ch.val();
+      });
+
+      renderCentralCards(document.getElementById('searchCentral').value || '');
+    });
+  }
+
+  function formatDate(ts) { if (!ts) return ''; const d = new Date(ts); const dia = String(d.getDate()).padStart(2,'0'); const mes = String(d.getMonth()+1).padStart(2,'0'); const ano = d.getFullYear(); const hh = String(d.getHours()).padStart(2,'0'); const mm = String(d.getMinutes()).padStart(2,'0'); return `${dia}/${mes}/${ano} ${hh}:${mm}`; }
+
+  // Render vertical cards for central (with checkboxes, totals, fotos completos)
+  function renderCentralCards(filterText = '') {
+    const container = document.getElementById('centralCardsContainer');
+    container.innerHTML = '';
+    const q = (filterText || '').toLowerCase().trim();
+
+    const arr = Object.keys(pedidosCache).map(k => ({ id: k, v: pedidosCache[k] }))
+      .sort((a,b) => (b.v.createdAt || 0) - (a.v.createdAt || 0));
+
+    let totalValor = 0;
+    arr.forEach(({id, v}) => {
+      const pontoExtraStr = Array.isArray(v.pontoExtra) ? v.pontoExtra.join(' | ') : (typeof v.pontoExtra === 'string' ? v.pontoExtra : '');
+      const hay = `${id} ${v.cliente || ''} ${v.retirada || ''} ${v.entrega || ''} ${v.motoboy || ''}`.toLowerCase();
+      if (q && hay.indexOf(q) === -1) return;
+
+      // add valor to total if numeric
+      const vStr = (v.valorEntrega || '').toString().replace(',', '.').trim();
+      const vNum = parseFloat(vStr);
+      if (!isNaN(vNum)) totalValor += vNum;
+
+      // build addresses array: A, extras..., B
+      const enderecos = [];
+      if (v.retirada) enderecos.push(v.retirada);
+      if (Array.isArray(v.pontoExtra)) v.pontoExtra.forEach(x => { if (x) enderecos.push(x); });
+      else if (v.pontoExtra && typeof v.pontoExtra === 'string') enderecos.push(v.pontoExtra);
+      if (v.entrega) enderecos.push(v.entrega);
+      const lastIndex = Math.max(0, enderecos.length - 1);
+
+      // photos: iterate v.fotos if present, otherwise fallback to fotoPontoAURL/B
+      let fotosHtml = '';
+      if (v.fotos) {
+        const keys = Object.keys(v.fotos).sort((a,b)=> Number(a)-Number(b));
+        keys.forEach(k => {
+          const fi = v.fotos[k];
+          const idx = Number(k);
+          let labelName = (idx === 0) ? 'Ponto A' : (idx === lastIndex) ? 'Ponto B' : `Extra ${idx}`;
+          const address = fi.address || enderecos[idx] || '';
+          fotosHtml += `<div style="display:inline-block; margin-right:8px; text-align:center;"><img class="thumb" src="${fi.url}"><br><small>${labelName}${address ? ' — ' + address : ''}</small><br><button class="ver-foto-btn" onclick="abrirModalFoto('${encodeURI(fi.url)}')">Ver Foto</button></div>`;
+        });
+      } else {
+        if (v.fotoPontoAURL) fotosHtml += `<div style="display:inline-block; margin-right:8px; text-align:center;"><img class="thumb" src="${v.fotoPontoAURL}"><br><small>Ponto A</small><br><button class="ver-foto-btn" onclick="abrirModalFoto('${encodeURI(v.fotoPontoAURL)}')">Ver Foto</button></div>`;
+        if (v.fotoPontoBURL) fotosHtml += `<div style="display:inline-block; margin-right:8px; text-align:center;"><img class="thumb" src="${v.fotoPontoBURL}"><br><small>Ponto B</small><br><button class="ver-foto-btn" onclick="abrirModalFoto('${encodeURI(v.fotoPontoBURL)}')">Ver Foto</button></div>`;
+      }
+
+      const dataLinha = formatDate(v.createdAt);
+      const clienteLinha = v.cliente || '';
+      const entregaRetirada = v.entrega ? v.entrega : (v.retirada ? v.retirada : '');
+      const motoboyLinha = v.motoboy || '';
+      const valorLinha = v.valorEntrega || '';
+
+      const card = document.createElement('div');
+      card.className = 'central-card';
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="checkbox" class="central-checkbox" data-id="${id}" />
+            <div style="font-weight:700;">Pedido: ${id}</div>
+          </div>
+          <div style="font-size:12px;color:#666;">${dataLinha}</div>
+        </div>
+
+        <div class="central-row" style="margin-top:8px;">
+          <div class="central-cell"><span class="central-label">Cliente</span><div>${clienteLinha}</div></div>
+          <div class="central-cell"><span class="central-label">Endereço (entrega/retirada)</span><div>${entregaRetirada}</div></div>
+          <div class="central-cell"><span class="central-label">Motoboy</span><div>${motoboyLinha}</div></div>
+          <div class="central-cell"><span class="central-label">Valor</span><div>
+            <input type="text" id="valor_${id}" value="${valorLinha}" placeholder="Valor" />
+            <button onclick="salvarValor('${id}')">Salvar</button>
+          </div></div>
+        </div>
+
+        <div style="margin-top:8px;" class="central-row">
+          <div class="central-cell"><span class="central-label">Status</span><div>${v.status || ''}</div></div>
+          <div class="central-cell"><span class="central-label">Extra(s)</span><div>${pontoExtraStr || '—'}</div></div>
+          <div class="central-cell"><span class="central-label">Fotos</span><div>${fotosHtml || '—'}</div></div>
+        </div>
+
+        <div style="margin-top:8px;">
+          <div class="central-label">Observação</div>
+          <div>${v.observacao || ''}</div>
+        </div>
+
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <button onclick="abrirChatCentral('${id}')">Abrir Chat</button>
+          <button onclick="irParaPedidoCentral('${id}')">Ver</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    // show total
+    const showTotalEl = document.getElementById('centralTotal');
+    showTotalEl.innerText = `Total exibido: R$ ${totalValor.toFixed(2)}`;
+  }
+
+  function salvarValor(key) {
+    const v = document.getElementById(`valor_${key}`).value.trim();
+    db.ref('pedidos/' + key).update({ valorEntrega: v, updatedAt: Date.now() }).then(() => {
+      // after save re-render central (so totals update)
+      carregarCentral();
+      alert('Valor salvo.');
+    });
+  }
+
+  // Select all toggle
+  function toggleSelectAll(checkbox) {
+    const checks = document.querySelectorAll('.central-checkbox');
+    checks.forEach(c => c.checked = checkbox.checked);
+  }
+
+  // Excluir selecionados
+  function excluirSelecionados() {
+  const checks = Array.from(document.querySelectorAll('.central-checkbox')).filter(c => c.checked);
+
+  if (checks.length === 0) {
+    alert('Nenhum pedido selecionado.');
+    return;
+  }
+
+  if (!confirm(`Excluir ${checks.length} pedido(s)?`)) return;
+
+  checks.forEach(c => {
+    const id = c.dataset.id;
+
+    // 🔥 SOMENTE PEDIDOS
+    db.ref('pedidos/' + id).remove();
+  });
+
+  alert('Pedidos excluídos com sucesso!');
+  carregarCentral();
+}
+
+  function irParaPedidoCentral(key) {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    document.querySelector('button[data-target="central"]').classList.add('active');
+    document.getElementById('central').classList.add('active');
+    abrirChatCentral(key);
+  }
+
+  // ========== PEDIDOS DO CLIENTE (com fotos e histórico) ==========
+  function carregarPedidosCliente() { 
+  const nome = localStorage.getItem('clienteNome');
+  const q = (document.getElementById('searchClienteHistorico')||{value:''}).value.toLowerCase().trim();
+
+  if (!nome) { 
+    document.getElementById("listaClientePedidos").innerHTML = '<p>Digite seu nome acima e envie um pedido para ver seus pedidos aqui.</p>'; 
+    return; 
+  }
+
+  if (carregarPedidosCliente.listener) {
+    db.ref('pedidos').off('value', carregarPedidosCliente.listener);
+  }
+
+  carregarPedidosCliente.listener = db.ref('pedidos').on('value', snap => {
+
+    const div = document.getElementById("listaClientePedidos"); 
+    div.innerHTML = '';
+
+    snap.forEach(ch => {
+
+      const pedido = ch.val(); 
+      const id = ch.key;
+      const isFinalizado = pedido.status === 'finalizado';
+
+if (abaCliente === 'ativos' && isFinalizado) return;
+if (abaCliente === 'historico' && !isFinalizado) return;
+
+      if (pedido.cliente === nome) {
+
+        const hay = `${id} ${pedido.retirada||''} ${pedido.entrega||''} ${pedido.status||''}`.toLowerCase();
+        if (q && hay.indexOf(q) === -1) return;
+
+        // ENDEREÇOS
+        const enderecos = [];
+        if (pedido.retirada) enderecos.push(pedido.retirada);
+
+        if (Array.isArray(pedido.pontoExtra)) {
+          pedido.pontoExtra.forEach(x => { if (x) enderecos.push(x); });
+        } else if (pedido.pontoExtra && typeof pedido.pontoExtra === 'string') {
+          enderecos.push(pedido.pontoExtra);
+        }
+
+        if (pedido.entrega) enderecos.push(pedido.entrega);
+
+        const lastIndex = Math.max(0, enderecos.length - 1);
+
+        // FOTOS
+        let fotosButtons = '';
+
+        if (pedido.fotos && Object.keys(pedido.fotos).length > 0) {
+          const keys = Object.keys(pedido.fotos).sort((a,b)=> Number(a)-Number(b));
+
+          keys.forEach(k => {
+            const fi = pedido.fotos[k];
+            const idx = Number(k);
+
+            let labelName = (idx === 0) ? 'Ponto A' : (idx === lastIndex) ? 'Ponto B' : `Extra ${idx}`;
+            const address = fi.address || enderecos[idx] || '';
+
+            fotosButtons += `
+              <div style="display:inline-block; margin-right:8px; text-align:center;">
+                <img class="thumb" src="${fi.url}">
+                <br>
+                <button class="btn-small" onclick="abrirModalFoto('${encodeURI(fi.url)}')">
+                  Ver ${labelName}${address ? ' — ' + address : ''}
+                </button>
+              </div>
+            `;
+          });
+
+       
+        } else {
+
+if (pedido.fotoPontoAURL) {
+  fotosButtons += `
+    <div style="display:inline-block; margin-right:8px;">
+      <img class="thumb" src="${pedido.fotoPontoAURL}">
+      <br>
+      <button class="btn-small" onclick="abrirModalFoto('${encodeURI(pedido.fotoPontoAURL)}')">
+        Ver Foto A
+      </button>
+    </div>
+  `;
+}
+
+if (pedido.fotoPontoBURL) {
+  fotosButtons += `
+    <div style="display:inline-block; margin-right:8px;">
+      <img class="thumb" src="${pedido.fotoPontoBURL}">
+      <br>
+      <button class="btn-small" onclick="abrirModalFoto('${encodeURI(pedido.fotoPontoBURL)}')">
+        Ver Foto B
+      </button>
+    </div>
+  `;
+}
+}
+
+        // EXTRAS
+        let pontoExtraStr = '';
+        if (Array.isArray(pedido.pontoExtra)) {
+          pontoExtraStr = pedido.pontoExtra.join(' | ');
+        } else if (typeof pedido.pontoExtra === 'string') {
+          pontoExtraStr = pedido.pontoExtra;
+        }
+
+        // CARD
+        let cardHtml = `
+          <div class="central-card">
+
+            <div style="display:flex; justify-content:space-between;">
+              <div><b>Pedido:</b> ${id}</div>
+              <div style="color:#666;">${formatDate(pedido.createdAt)}</div>
+            </div>
+
+            <p><b>Status:</b> ${pedido.status}</p>
+            <p><b>Retirada:</b> ${pedido.retirada}</p>
+            <p><b>Entrega:</b> ${pedido.entrega}</p>
+            <p><b>Extras:</b> ${pontoExtraStr}</p>
+
+            <div style="display:flex; gap:8px; margin:6px 0; flex-wrap:wrap;">
+              ${fotosButtons || 'Sem fotos'}
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+
+              <button onclick="abrirChatCliente('${id}')">💬 Chat</button>
+
+              <button onclick="finalizarEntregaCliente('${id}')">✅ Finalizar</button>
+              
+              ${pedido.status !== 'finalizado' ? `<button onclick="cancelarPedido('${id}')">❌ Cancelar</button>` : ''}
+              
+              <button onclick="repetirPedido(
+                '${(pedido.retirada || "").replace(/'/g, "\\'")}',
+                '${(pedido.entrega || "").replace(/'/g, "\\'")}',
+                '${(pontoExtraStr || "").replace(/'/g, "\\'")}',
+                '${(pedido.observacao || "").replace(/'/g, "\\'")}'
+              )">🔁 Pedir novamente</button>
+
+            </div>
+
+          </div>
+        `;
+
+        const card = document.createElement('div'); 
+        card.innerHTML = cardHtml; 
+        div.appendChild(card);
+      }
+
+    });
+  });
+}
+  
+
+  function repetirPedido(retirada, entrega, pontoExtra, observacao) {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    document.querySelector('button[data-target="cliente"]').classList.add('active');
+    document.getElementById('cliente').classList.add('active');
+    document.getElementById('pontoA').value = retirada;
+    document.getElementById('pontoB').value = entrega;
+    const container = document.getElementById('pontosExtrasContainer'); container.innerHTML = '';
+    if (pontoExtra) {
+      const arr = (typeof pontoExtra === 'string' && pontoExtra.indexOf(' | ') !== -1) ? pontoExtra.split(' | ') : [pontoExtra];
+      arr.forEach(a => adicionarPontoOpcional(a));
+    } else { adicionarPontoOpcional(); }
+    document.getElementById('observacao').value = observacao || '';
+    document.getElementById("chatCliente").style.display = 'none';
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+  window.repetirPedido = repetirPedido;
+
+  // ========== notifications periodic ==========
+  const NOTIF_STORAGE_KEY = 'expresso_notif_ts_v1';
+  function getNotifStore(){ try { return JSON.parse(localStorage.getItem(NOTIF_STORAGE_KEY) || '{}'); } catch(e){ return {}; } }
+  function setNotifStore(obj){ localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(obj)); }
+async function checarEReproduzirNotificacoes() {
+  if (localStorage.getItem('motoboyOnline') !== 'true') return;
+  const snap = await db.ref('pedidos').once('value');
+    const data = snap.val() || {};
+    const store = getNotifStore();
+    const now = Date.now();
+    Object.keys(data).forEach(id => {
+      const p = data[id];
+      const motoboyAtual = (nomeUsuario || localStorage.getItem('motoboyNome') || '').toLowerCase();
+const direcionado = (p.motoboySelecionado || '').toLowerCase();
+
+// 🔒 REGRA NOVA
+if (p.status === 'pendente') {
+
+  // se tem motoboy específico e NÃO é ele → IGNORA
+  if (direcionado && direcionado !== motoboyAtual) {
+    return;
+  }
+        const last = store[id] || 0;
+        if (now - last >= 1000 * 60 * 60) {
+          document.getElementById('notificacaoAudio').play().catch(()=>{});
+          store[id] = now;
+        }
+      }
+    });
+    setNotifStore(store);
+  }
+
+  // ========== Modal functions (Ver Foto) ==========
+  function abrirModalFoto(url, title='') {
+    const modal = document.getElementById('modalFoto');
+    const content = document.getElementById('modalContent');
+    const t = document.getElementById('modalTitle');
+    t.innerText = title || '';
+    content.innerHTML = `<img src="${decodeURIComponent(url)}" style="max-width:100%; max-height:70vh; border-radius:6px;" />`;
+    modal.style.display = 'flex';
+  }
+  function fecharModal(){ document.getElementById('modalFoto').style.display = 'none'; document.getElementById('modalContent').innerHTML = ''; }
+  function closeModalFoto(e){ if(e.target === document.getElementById('modalFoto')) fecharModal(); }
+  window.fecharModal = fecharModal;
+
+  // ========== Histórico motoboy (fotos) ==========
+  async function carregarHistoricoMotoboy() {
+    const nome = localStorage.getItem('motoboyNome');
+    const div = document.getElementById('listaHistoricoMotoboy');
+    div.innerHTML = '<p>Carregando histórico...</p>';
+    if (!nome) { div.innerHTML = '<p>Salve seu nome ao ficar online para ver o histórico.</p>'; return; }
+    try {
+      // buscar fotosHistorico que contenham motoboy = nome
+      const snap = await db.ref('fotosHistorico').once('value');
+      const out = [];
+      snap.forEach(pedidoSnap => {
+        pedidoSnap.forEach(picSnap => {
+          const v = picSnap.val();
+          if (v && v.motoboy === nome) {
+            out.push({ pedidoId: pedidoSnap.key, ...v });
+          }
+        });
+      });
+      if (out.length === 0) { div.innerHTML = '<p>Nenhuma foto encontrada para este motoboy.</p>'; return; }
+      div.innerHTML = '';
+      out.sort((a,b)=> b.uploadedAt - a.uploadedAt);
+
+      // compute total value from pedidos finalizados that belong to this motoboy
+      let totalValor = 0;
+      // gather pedido ids unique
+      const pedidoIds = Array.from(new Set(out.map(o => o.pedidoId)));
+      // read pedido values
+      const promises = pedidoIds.map(pid => db.ref(`pedidos/${pid}`).once('value'));
+      const snaps = await Promise.all(promises);
+      snaps.forEach(s => {
+        const p = s.val();
+        if (p && p.motoboy === nome && (p.status === 'finalizado' || p.status === 'em andamento' || p.status === 'pendente')) {
+          const vStr = (p.valorEntrega || '').toString().replace(',','.');
+          const vNum = parseFloat(vStr);
+          if (!isNaN(vNum)) totalValor += vNum;
+        }
+      });
+
+      out.forEach(item=>{
+        const el = document.createElement('div');
+        el.className = 'central-card';
+        el.innerHTML = `
+          <div style="display:flex; justify-content:space-between;">
+            <div><b>Pedido:</b> ${item.pedidoId}</div>
+            <div style="color:#666;">${formatDate(item.uploadedAt)}</div>
+          </div>
+          <div><b>Ponto:</b> ${item.ponto} ${item.address ? '— ' + item.address : ''}</div>
+          <div><b>Arquivo:</b> ${item.fileName}</div>
+          <div style="margin-top:6px;"><img class="thumb" src="${item.url}"></div>
+          <div style="margin-top:6px;"><button onclick="abrirModalFoto('${encodeURI(item.url)}')">Ver Foto</button></div>
+        `;
+        div.appendChild(el);
+      });
+
+      const totalEl = document.createElement('div');
+      totalEl.style.fontWeight = '700';
+      totalEl.style.marginTop = '10px';
+      totalEl.innerText = `Total (valores conhecidos deste motoboy): R$ ${totalValor.toFixed(2)}`;
+      div.appendChild(totalEl);
+
+    } catch (e) {
+      console.error(e);
+      div.innerHTML = '<p>Erro ao carregar histórico.</p>';
+    }
+  }
+
+  // ===== FIREBASE AUTH =====
+  const auth = firebase.auth();
+
+function cadastrar() {
+  const email = document.getElementById("email").value.trim();
+  const senha = document.getElementById("senha").value.trim();
+  const tipo = document.getElementById("tipoLogin").value;
+
+  // 🚫 NÃO PERMITE CADASTRAR CENTRAL
+  if (tipo === "central") {
+    alert("Cadastro da central não é permitido.");
+    return;
+  }
+
+  // 🔐 CHAVE DE ACESSO (cliente/motoboy)
+  const CHAVE_USUARIO = "expresso2026";
+  const chave = prompt("Digite a chave de acesso:");
+
+  if (chave !== CHAVE_USUARIO) {
+    alert("Chave inválida!");
+    return;
+  }
+
+  // 🧾 DADOS DO USUÁRIO
+  const nome = prompt("Nome completo:");
+  const idade = prompt("Idade:");
+  const sexo = prompt("Sexo:");
+  const documento = prompt("CPF ou RG:");
+
+  // ⚠️ VALIDAÇÕES BÁSICAS
+  if (!email || !senha || !tipo || !nome) {
+    alert("Preencha todos os campos obrigatórios!");
+    return;
+  }
+
+  if (senha.length < 6) {
+    alert("A senha precisa ter pelo menos 6 caracteres.");
+    return;
+  }
+
+  if (!idade || isNaN(idade)) {
+    alert("Idade inválida.");
+    return;
+  }
+
+  // 🔥 CRIA USUÁRIO NO FIREBASE AUTH
+  auth.createUserWithEmailAndPassword(email, senha)
+    .then(userCredential => {
+
+      const uid = userCredential.user.uid;
+
+      // 💾 SALVA NO BANCO
+      return db.ref("usuarios/" + uid).set({
+        tipo: tipo,
+        email: email,
+        nome: nome,
+        idade: idade,
+        sexo: sexo,
+        documento: documento,
+        ativo: false, // 🔒 BLOQUEADO ATÉ LIBERAÇÃO
+        createdAt: Date.now()
+      });
+
+    })
+    .then(() => {
+      alert("Conta criada! Aguarde liberação da central.");
+      
+      // limpa campos
+      document.getElementById("email").value = "";
+      document.getElementById("senha").value = "";
+      document.getElementById("tipoLogin").value = "";
+
+    })
+    .catch(error => {
+      alert("Erro: " + error.message);
+    });
+}
+function login() {
+  const email = document.getElementById("email").value;
+  const senha = document.getElementById("senha").value;
+  const tipo = document.getElementById("tipoLogin").value;
+
+  // 🔐 LOGIN DIRETO CENTRAL (SEM FIREBASE)
+  if (tipo === "central") {
+
+    const cfg = window.CONFIG_CENTRAL;
+
+if (!cfg) {
+  alert("Erro interno: CONFIG_CENTRAL não definida");
+  return;
+}
+
+if (email !== cfg.email || senha !== cfg.senha) {
+  alert("Login da central inválido");
+  return;
+}
+
+const chave = prompt("Digite a chave da central:");
+
+if (chave !== cfg.chave) {
+  alert("Chave incorreta");
+  return;
+}
+
+// 🔥 DEFINE USUÁRIO (IMPORTANTE)
+tipoUsuario = "central";
+nomeUsuario = "Central";
+
+// 🔥 LIBERA DIRETO
+document.getElementById("telaLogin").style.display = "none";
+document.getElementById("app").style.display = "block";
+
+document.querySelectorAll("section").forEach(sec => sec.style.display = "none");
+document.querySelectorAll("nav button").forEach(btn => btn.style.display = "none");
+
+document.getElementById("central").style.display = "block";
+document.querySelector('[data-target="central"]').style.display = "inline-block";
+
+return;
+}
+
+  // 🔵 CLIENTE E MOTOBOY (NORMAL)
+  auth.signInWithEmailAndPassword(email, senha)
+    .then(userCredential => {
+      usuarioLogado = userCredential.user;
+      iniciarApp(userCredential.user.uid);
+      tipoUsuario = tipo;
+nomeUsuario = email; // ou melhor: nome real depois
+    })
+    .catch(error => {
+      alert("Erro no login: " + error.message);
+    });
+}
+
+function iniciarApp(uid) {
+
+db.ref("usuarios/" + uid).once("value")
+  .then(snap => {
+
+    const dados = snap.val();
+
+    if (!dados) {
+      alert("Usuário não encontrado");
+      return;
+    }
+
+    if (dados.ativo === false) {
+      alert("Seu acesso ainda não foi liberado pela central.");
+      auth.signOut();
+      location.reload();
+      return;
+    }
+
+    tipoUsuario = dados.tipo;
+    nomeUsuario = dados.nome;
+
+    // 🔥 ESCONDE LOGIN
+    document.getElementById("telaLogin").style.display = "none";
+
+    // 🔥 MOSTRA APP
+    document.getElementById("app").style.display = "block";
+    solicitarPermissaoNotificacao();
+
+    // 🔥 ESCONDE TODAS AS TELAS
+    document.querySelectorAll("section").forEach(sec => {
+      sec.style.display = "none";
+    });
+
+    // 🔥 ESCONDE TODOS OS BOTÕES
+    document.querySelectorAll("nav button").forEach(btn => {
+      btn.style.display = "none";
+    });
+
+    // 🔥 MOSTRA NAV
+    document.querySelector("nav").style.display = "flex";
+
+    // 🔥 LIBERA SOMENTE O TIPO CERTO
+    if (tipoUsuario === "cliente") {
+      document.getElementById("cliente").style.display = "block";
+      document.querySelector('[data-target="cliente"]').style.display = "inline-block";
+    }
+    if (tipoUsuario === "motoboy") {
+      document.getElementById("motoboy").style.display = "block";
+      document.querySelector('[data-target="motoboy"]').style.display = "inline-block";
+    }
+
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Erro ao iniciar app");
+  });
+}
+     
+function finalizarEntregaCliente(id) {
+  if (!confirm("Confirmar que a entrega foi finalizada?")) return;
+
+  db.ref('pedidos/' + id).update({
+    status: 'finalizado',
+    updatedAt: Date.now()
+  });
+
+  alert("Entrega finalizada!");
+}
+function renderPedidoCliente(pedido, id) {
+const div = document.getElementById("listaClientePedidos");
+
+const enderecos = [];
+if (pedido.retirada) enderecos.push(pedido.retirada);
+
+if (Array.isArray(pedido.pontoExtra)) {
+  pedido.pontoExtra.forEach(x => { if (x) enderecos.push(x); });
+}
+
+if (pedido.entrega) enderecos.push(pedido.entrega);
+
+const lastIndex = enderecos.length - 1;
+
+  const keys = Object.keys(pedido.fotos).sort((a,b)=> Number(a)-Number(b));
+
+  keys.forEach(k => {
+    const fi = pedido.fotos[k];
+
+    fotosButtons += `
+      <div style="display:inline-block; margin:5px; text-align:center;">
+        <img class="thumb" src="${fi.url}">
+        <br>
+        <button onclick="abrirModalFoto('${encodeURI(fi.url)}')">
+          Ver Foto
+        </button>
+      </div>
+    `;
+  });
+
+}
+function cancelarPedido(id) {
+  if (!confirm("Tem certeza que deseja cancelar o pedido?")) return;
+
+  db.ref('pedidos/' + id).update({
+    status: 'cancelado',
+    updatedAt: Date.now()
+  });
+
+  alert("Pedido cancelado!");
+}
+function carregarUsuarios(tipoFiltro) {
+  const div = document.getElementById("listaUsuarios");
+  if (!div) return;
+
+  const busca = (document.getElementById("searchUsuarios")?.value || "").toLowerCase();
+
+  // 🔥 REMOVE SOMENTE O LISTENER DE USUÁRIOS
+  if (carregarUsuarios.listener) {
+    db.ref('usuarios').off('value', carregarUsuarios.listener);
+  }
+
+  carregarUsuarios.listener = db.ref('usuarios').on('value', snap => {
+    div.innerHTML = "";
+
+    snap.forEach(user => {
+      const u = user.val();
+      const id = user.key;
+
+      if (tipoFiltro && u.tipo !== tipoFiltro) return;
+
+      const texto = `${u.nome || ''} ${u.email || ''} ${u.documento || ''}`.toLowerCase();
+      if (busca && !texto.includes(busca)) return;
+
+      const el = document.createElement("div");
+      el.className = "central-card";
+
+      el.innerHTML = `
+        <p><b>${u.nome}</b> (${u.tipo})</p>
+        <p>${u.email}</p>
+        <p>Status: ${u.ativo ? "🟢 Liberado" : "🔴 Bloqueado"}</p>
+
+        <button onclick="toggleUsuario('${id}', ${u.ativo})">
+          ${u.ativo ? "Bloquear" : "Liberar"}
+        </button>
+      `;
+
+      div.appendChild(el);
+    });
+  });
+}
+function toggleUsuario(uid, ativoAtual) {
+  db.ref("usuarios/" + uid).update({
+    ativo: !ativoAtual
+  });
+
+  alert("Status atualizado!");
+}
+
+function atualizarPedidosMotoboy() {
+  const online = localStorage.getItem('motoboyOnline') === 'true';
+
+  if (!online) {
+    alert("Fique online para atualizar os pedidos.");
+    return;
+  }
+
+  // remove listener antigo (evita duplicação)
+  if (carregarPending.listener) {
+    db.ref('pedidos').off('value', carregarPending.listener);
+    carregarPending.listener = null;
+  }
+
+  // limpa lista
+  document.getElementById('listaPending').innerHTML = '';
+
+  // recarrega
+  carregarPending();
+
+  console.log("Pedidos atualizados");
+}
+function trocarAbaCliente(tipo) {
+  abaCliente = tipo;
+
+  document.getElementById('btnAtivos').style.opacity = tipo === 'ativos' ? '1' : '0.5';
+  document.getElementById('btnHistorico').style.opacity = tipo === 'historico' ? '1' : '0.5';
+
+  carregarPedidosCliente();
+}
+// ======================================================
+// PERMISSÕES PLAY STORE
+// ======================================================
+
+// CAMERA
+function solicitarPermissaoCamera(callback) {
+
+const jaAceitou = localStorage.getItem("perm_camera_ok");
+
+if (jaAceitou === "true") {
+  if (callback) callback();
+  return;
+}
+
+const permitir = confirm(
+`📷 Câmera
+
+A câmera é utilizada para registrar comprovantes de coleta e entrega.
+
+Deseja permitir o uso da câmera?`
+);
+
+if (!permitir) return;
+
+localStorage.setItem("perm_camera_ok", "true");
+
+if (callback) callback();
+}
+
+// LOCALIZAÇÃO
+function solicitarPermissaoLocalizacao(callback) {
+
+const jaAceitou = localStorage.getItem("perm_localizacao_ok");
+
+if (jaAceitou === "true") {
+  if (callback) callback();
+  return;
+}
+
+const permitir = confirm(
+`📍 Localização
+
+A localização é utilizada para rastreamento e gerenciamento das entregas em tempo real.
+
+Deseja permitir acesso à localização?`
+);
+
+if (!permitir) return;
+
+navigator.geolocation.getCurrentPosition(
+  () => {
+    localStorage.setItem("perm_localizacao_ok", "true");
+
+    if (callback) callback();
+  },
+  () => {
+    alert("Permissão de localização negada.");
+  }
+);
+}
+
+// NOTIFICAÇÕES
+function solicitarPermissaoNotificacao() {
+
+const jaAceitou = localStorage.getItem("perm_notificacao_ok");
+
+if (jaAceitou === "true") return;
+
+const permitir = confirm(
+`🔔 Notificações
+
+As notificações são utilizadas para alertas de pedidos, atualizações e comunicação operacional.
+
+Deseja permitir notificações?`
+);
+
+if (!permitir) return;
+
+Notification.requestPermission().then(permission => {
+
+  if (permission === "granted") {
+    localStorage.setItem("perm_notificacao_ok", "true");
+  }
+
+});
+}
+</script>
+</body>
+</html>
